@@ -98,9 +98,14 @@ def process_jsonl_file(file_path: Path, default_issue_id: int | None = None):
                 # Execute function
                 logger.info(f"Executing {func_name} with args={args}, kwargs={kwargs}")
                 result = func(*args, **kwargs)
+                result_str = str(result)
                 
-                logger.info(f"Line {line_num}: Operation {func_name} completed successfully")
-                logger.info(f"Function output: {str(result)}")
+                if result_str.startswith("Error"):
+                    logger.error(f"Line {line_num}: Operation {func_name} failed")
+                    logger.error(f"Function output: {result_str}")
+                else:
+                    logger.info(f"Line {line_num}: Operation {func_name} completed successfully")
+                    logger.info(f"Function output: {result_str}")
                     
             except Exception as e:
                 logger.error(f"Line {line_num}: Execution error - {e}")
