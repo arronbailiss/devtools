@@ -78,7 +78,7 @@ async function determineBranch(github, context, issueId, mode, isPullRequest, in
   return { branchName, headRepo, headSha };
 }
 
-function buildPrompts(mode, issueId, isPullRequest, command, branchName, inputs, issue) {
+function buildPrompts(mode, issueId, isPullRequest, command, branchName, inputs, issue, headSha) {
   const sessionId = inputs.session_id || (mode === 'implementer' 
     ? `${mode}-${branchName}`.replace(/[\/\\]/g, '-')
     : `${mode}-${issueId}`);
@@ -102,6 +102,9 @@ function buildPrompts(mode, issueId, isPullRequest, command, branchName, inputs,
     ? 'The pull request id is:'
     : 'The issue id is:';
   prompt += `${issueId}\n${command}\nreview and continue`;
+  if (mode === 'reviewer' && isPullRequest) {
+    prompt += `\nThe head commit is ${headSha}, and it is checked out. Earlier turns may have reviewed an older commit, so compare against what you reviewed before deciding nothing changed.`;
+  }
 
   // For the bug verifier, snapshot the issue title/body into the prompt at
   // command time. The agent executes reproduction code derived from this
@@ -145,7 +148,7 @@ module.exports = async (context, github, core, inputs) => {
     const { branchName, headRepo, headSha } = await determineBranch(github, context, issueId, mode, isPullRequest, inputs);
     console.log(`Building prompts - mode: ${mode}, issue: ${issueId}, is PR: ${isPullRequest}`);
 
-    const { sessionId, systemPrompt, prompt } = buildPrompts(mode, issueId, isPullRequest, command, branchName, inputs, issue);
+    const { sessionId, systemPrompt, prompt } = buildPrompts(mode, issueId, isPullRequest, command, branchName, inputs, issue, headSha);
     
     console.log(`Session ID: ${sessionId}`);
     console.log(`Task prompt: "${prompt}"`);
